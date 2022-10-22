@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
-import 'cart_item_card.dart';
-import 'cart_manager.dart';
 import 'package:provider/provider.dart';
+import '../../ui/screens.dart';
+import './cart_item_card.dart';
 
 class CartScreen extends StatelessWidget {
   static const routeName = '/cart';
+
   const CartScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
-    final cart = context.read<CartManager>();
+    final cart = context.watch<CartManager>();
     return Scaffold(
       appBar: AppBar(
         title: const Text('Your Cart'),
@@ -17,10 +18,10 @@ class CartScreen extends StatelessWidget {
       body: Column(
         children: <Widget>[
           buildCartSummary(cart, context),
-          const SizedBox(
-            height: 10,
+          const SizedBox(height: 16),
+          Expanded(
+            child: buildCartDetails(cart),
           ),
-          Expanded(child: buildCartDetails(cart))
         ],
       ),
     );
@@ -29,10 +30,12 @@ class CartScreen extends StatelessWidget {
   Widget buildCartDetails(CartManager cart) {
     return ListView(
       children: cart.productEntries
-          .map((entry) => CartItemCard(
-                productId: entry.key,
-                cardItem: entry.value,
-              ))
+          .map(
+            (entry) => CartItemCard(
+              productId: entry.key,
+              cardItem: entry.value,
+            ),
+          )
           .toList(),
     );
   }
@@ -43,25 +46,37 @@ class CartScreen extends StatelessWidget {
       child: Padding(
         padding: const EdgeInsets.all(8),
         child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: <Widget>[
-            const Text('Total', style: TextStyle(fontSize: 20)),
+            const Text(
+              'Total',
+              style: TextStyle(fontSize: 20),
+            ),
             const Spacer(),
             Chip(
               label: Text(
                 '\$${cart.totalAmount.toStringAsFixed(2)}',
                 style: TextStyle(
-                    color: Theme.of(context).primaryTextTheme.headline6?.color,
-                    backgroundColor: Theme.of(context).primaryColor),
+                  color: Theme.of(context).primaryTextTheme.headline6?.color,
+                ),
               ),
+              backgroundColor: Theme.of(context).primaryColor,
             ),
             TextButton(
-              onPressed: () {
-                print('An order has been added');
-              },
+              onPressed: cart.totalAmount <= 0
+                  ? null
+                  : () {
+                      context.read<OrdersManager>().addOrder(
+                            cart.products,
+                            cart.totalAmount,
+                          );
+                      cart.clear();
+                    },
               style: TextButton.styleFrom(
-                  textStyle: TextStyle(
-                color: Theme.of(context).primaryColor,
-              )),
+                textStyle: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                ),
+              ),
               child: const Text('ORDER NOW'),
             ),
           ],
