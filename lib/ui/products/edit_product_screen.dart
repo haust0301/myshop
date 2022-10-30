@@ -66,27 +66,6 @@ class _EditProductScreenState extends State<EditProductScreen> {
     super.dispose();
   }
 
-  Future<void> showErrorDialog(
-    BuildContext context,
-    String message,
-  ) {
-    return showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        title: const Text('An Error Occurred!'),
-        content: Text(message),
-        actions: <Widget>[
-          TextButton(
-            child: const Text('Okay'),
-            onPressed: () {
-              Navigator.of(ctx).pop();
-            },
-          )
-        ],
-      ),
-    );
-  }
-
   Future<void> _saveForm() async {
     final isValid = _editForm.currentState!.validate();
     if (!isValid) {
@@ -100,12 +79,12 @@ class _EditProductScreenState extends State<EditProductScreen> {
     try {
       final productsManager = context.read<ProductsManager>();
       if (_editedProduct.id != null) {
-        productsManager.updateProduct(_editedProduct);
+        await productsManager.updateProduct(_editedProduct);
       } else {
-        productsManager.addProduct(_editedProduct);
+        await productsManager.addProduct(_editedProduct);
       }
     } catch (error) {
-      await showErrorDialog(context, 'Something  went wrong.');
+      await showErrorDialog(context, 'Something went wrong.');
     }
     setState(() {
       _isLoading = false;
