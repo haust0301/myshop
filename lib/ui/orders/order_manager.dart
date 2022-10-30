@@ -4,21 +4,7 @@ import '../../models/cart_item.dart';
 import '../../models/order_item.dart';
 
 class OrdersManager with ChangeNotifier {
-  final List<OrderItem> _orders = [
-    OrderItem(
-      id: 'o1',
-      amount: 59.98,
-      products: [
-        CartItem(
-          id: 'c1',
-          title: 'Red Shirt',
-          quantity: 2,
-          price: 29.99,
-        )
-      ],
-      dateTime: DateTime.now(),
-    )
-  ];
+  final List<OrderItem> _orders = [];
 
   int get orderCount {
     return _orders.length;
