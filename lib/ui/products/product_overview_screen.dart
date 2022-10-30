@@ -1,32 +1,82 @@
 import 'package:flutter/material.dart';
-import 'package:myshop/ui/cart/cart_manager.dart';
-import 'package:myshop/ui/cart/cart_screen.dart';
-import 'package:myshop/ui/products/products_grid.dart';
-import 'package:myshop/ui/shared/app_drawer.dart';
-import '../shared/app_drawer.dart';
-import 'top_right_badge.dart';
 import 'package:provider/provider.dart';
+import '../../ui/screens.dart';
+import '../../ui/shared/app_drawer.dart';
+import './products_grid.dart';
+import './top_right_badge.dart';
 
-enum FilterOptions { favorite, all }
+enum FilterOptions { favorites, all }
 
 class ProductsOverviewScreen extends StatefulWidget {
   const ProductsOverviewScreen({super.key});
-
   @override
   State<ProductsOverviewScreen> createState() => _ProductsOverviewScreenState();
 }
 
 class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
-  var _showOnlyFavorites = false;
+  final _showOnlyFavorites = ValueNotifier<bool>(false);
+  late Future<void> _fetchProducts;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchProducts = context.read<ProductsManager>().fetchProducts();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('My shop'),
-        actions: <Widget>[buildProductFilterMeunu(), buildShoppingCartIcon()],
+        title: const Text('MyShop'),
+        actions: <Widget>[
+          buildProductFilterMenu(),
+          buildShoppingCartIcon(),
+        ],
       ),
       drawer: const AppDrawer(),
-      body: ProductsGrid(_showOnlyFavorites),
+      body: FutureBuilder(
+        future: _fetchProducts,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.done) {
+            return ValueListenableBuilder(
+              valueListenable: _showOnlyFavorites,
+              builder: (context, onlyFavorites, child) {
+                return ProductsGrid(onlyFavorites);
+              },
+            );
+          }
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget buildProductFilterMenu() {
+    return PopupMenuButton(
+      onSelected: (FilterOptions setectedValue) {
+        setState(
+          () {
+            if (setectedValue == FilterOptions.favorites) {
+              _showOnlyFavorites.value = true;
+            } else {
+              _showOnlyFavorites.value = false;
+            }
+          },
+        );
+      },
+      icon: const Icon(Icons.more_vert),
+      itemBuilder: (context) => [
+        const PopupMenuItem(
+          value: FilterOptions.favorites,
+          child: Text('Only Favorites'),
+        ),
+        const PopupMenuItem(
+          value: FilterOptions.all,
+          child: Text('Show All'),
+        )
+      ],
     );
   }
 
@@ -47,33 +97,6 @@ class _ProductsOverviewScreenState extends State<ProductsOverviewScreen> {
           ),
         );
       },
-    );
-  }
-
-  Widget buildProductFilterMeunu() {
-    return PopupMenuButton(
-      onSelected: (FilterOptions selectedValue) {
-        setState(() {
-          if (selectedValue == FilterOptions.favorite) {
-            _showOnlyFavorites = true;
-          } else {
-            _showOnlyFavorites = false;
-          }
-        });
-      },
-      icon: const Icon(
-        Icons.more_vert,
-      ),
-      itemBuilder: (ctx) => [
-        const PopupMenuItem(
-          value: FilterOptions.favorite,
-          child: Text('Only Favorites'),
-        ),
-        const PopupMenuItem(
-          value: FilterOptions.all,
-          child: Text('ShowAll'),
-        )
-      ],
     );
   }
 }
